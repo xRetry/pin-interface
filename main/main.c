@@ -6,7 +6,9 @@
 #include "esp_wifi.h"
 #include "mongoose.h"
 #include "nvs_flash.h"
+
 #include "wifi.h"
+#include "utils.h"
 
 #define QUOTE(...) #__VA_ARGS__
 #define NUM_PINS 10
@@ -17,37 +19,20 @@ struct {
 
 void save_config(int config[NUM_PINS]) {
     printf("writing..\n");
-    //if (remove("config") == 0) {
-    //    printf("Deleted successfully");
-    //} else {
-    //    printf("Unable to delete the file");
-    //}
-
-    FILE *fptr = fopen("config", "wb");
-    if (fptr == NULL) {
-        printf("Error opening config file\n");
-        return;
+    esp_err_t err = utils_fwrite_binary("config", config, sizeof(int)*NUM_PINS);
+    if (err != ESP_OK) {
+        printf("Error saving config (%d)\n", err);
     }
-
-    fwrite(config, sizeof(int), NUM_PINS, fptr);
-    fclose(fptr);
 }
 
 void read_config(int config[NUM_PINS]) {
-    FILE *fptr = fopen("config", "rb");
-    if (fptr == NULL) {
+    esp_err_t err = utils_fread_binary("config", config, sizeof(int)*NUM_PINS);
+    if (err != ESP_OK) {
+        printf("Error reading config file (%d)\n", err);
         for (int i=0; i<NUM_PINS; ++i) {
             config[i] = 0;
         }
-        return;
     }
-
-    int ret = fread(config, sizeof(int), NUM_PINS, fptr);
-    if (ret != NUM_PINS) {
-        printf("Error reading config file (%d)\n", ret);
-    }
-
-    fclose(fptr);
 
     for (int i=0; i<NUM_PINS; ++i) {
         printf("%d - %d\n", i, config[i]);
@@ -171,7 +156,6 @@ void init_state() {
 }
 
 int app_main() {
-    //Initialize NVS
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
       ESP_ERROR_CHECK(nvs_flash_erase());
