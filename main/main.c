@@ -12,13 +12,56 @@
 
 #define QUOTE(...) #__VA_ARGS__
 #define NUM_PINS 10
+#define NUM_CHARS_JS NUM_PINS * 20
+#define NUM_CONTENT NUM_CHARS_JS + 1000
+#define JS_TEMPLATE "\
+    <!DOCTYPE html> \
+    <html lang=\"en\"> \
+        <head> \
+            <title>Board Configuration</title> \
+            <style> \
+                form { \
+                    display: grid; \
+                    grid-template-columns: 1fr 2fr; \
+                    gap: 10px; \
+                    width: 300px; \
+                    margin-top: 30px; \
+                    margin-left: auto; \
+                    margin-right: auto; \
+                } \
+            </style> \
+        </head> \
+        <body> \
+            <form method=\"post\" action=\"set-config\"> \
+                <input type=\"submit\" value=\"Save\"/> \
+            </form> \
+        <script> \
+            %s \
+            const MODE_DESCS = ['Disabled', 'Digital Input', 'Digital Output', 'Analog Input', 'Analog Output']; \
+\
+            let form = document.querySelector('form'); \
+            for (const [num, modes, mode] of PINS.reverse()) { \
+                let select = `<select name=\"${num}\">`; \
+                let i = 0; \
+                for (const m of modes.toString(2)) { \
+                    const sel = i === mode ? ' selected' : ''; \ 
+                    if (m > 0) { select += `<option value=\"${i}\"${sel}>${MODE_DESCS[i]}</option>`; } \
+                    ++i; \
+                } \
+\
+                form.insertAdjacentHTML('afterbegin', select+'</select>'); \
+                form.insertAdjacentHTML('afterbegin', `<label>Pin ${num}</label>`); \
+            } \
+        </script> \
+        </body> \
+    </html> \
+"
 
 struct {
     int modes[NUM_PINS];
 } state;
 
 void save_config(int config[NUM_PINS]) {
-    printf("writing..\n");
     esp_err_t err = utils_fwrite_binary("config", config, sizeof(int)*NUM_PINS);
     if (err != ESP_OK) {
         printf("Error saving config (%d)\n", err);
@@ -26,6 +69,7 @@ void save_config(int config[NUM_PINS]) {
 }
 
 void read_config(int config[NUM_PINS]) {
+    printf("Reading config..\n");
     esp_err_t err = utils_fread_binary("config", config, sizeof(int)*NUM_PINS);
     if (err != ESP_OK) {
         printf("Error reading config file (%d)\n", err);
@@ -33,65 +77,55 @@ void read_config(int config[NUM_PINS]) {
             config[i] = 0;
         }
     }
-
-    for (int i=0; i<NUM_PINS; ++i) {
-        printf("%d - %d\n", i, config[i]);
-    }
 }
 
 static void handle_config(struct mg_connection *conn, int ev, void *ev_data, void *fn_data) {
+    char pins[330] = "const PINS = [";
+
+    for (int i=0; i<NUM_PINS; ++i) {
+        //TODO(marco): Insert condition for invalid pins
+        if (false) { continue; }
+
+        char pin[3];
+        snprintf(pin, 3, "%d", i);
+        char mode[4];
+        snprintf(mode, 4, "%d", state.modes[i]);
+
+        char str[20] = "[";
+        strcat(str, pin);
+        strcat(str, ",");
+        strcat(str, "31");
+        strcat(str, ",");
+        strcat(str, mode);
+        strcat(str, "],");
+
+        strcat(pins, str);
+    }
+    strcat(pins, "];");
+
+
+    // Heap allocation necessary to avoid overflow due to limited stack size
+    char *content = (char*) malloc((NUM_PINS*20+strlen(JS_TEMPLATE))*sizeof(char));
+    if (content == NULL) {
+        printf("Allocation failed\n");
+        exit(1);
+    }
+    snprintf(content, 2000, JS_TEMPLATE, pins);
+
     mg_http_reply(
         conn, 
         200, 
         "Content-Type: text/html\r\n", 
-        QUOTE(
-            <!DOCTYPE html>
-            <html lang="en">
-                <head>
-                    <title>Board Configuration</title>
-                    <style>
-                        form {
-                            display: grid;
-                            grid-template-columns: 1fr 2fr;
-                            gap: 10px;
-                            width: 300px;
-                            margin-top: 30px;
-                            margin-left: auto;
-                            margin-right: auto;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <form method="post" action="set-config">
-                        <label>Pin 1</label>
-                        <select name="1">
-                            <option value="0">Disabled</option>
-                            <option value="1">Digital Input</option>
-                            <option value="2">Digital Output</option>
-                            <option value="3">Analog Input</option>
-                            <option value="4">Analog Output</option>
-                        </select>
-                        <label>Pin 2</label>
-                        <select name="2">
-                            <option value="0">Disabled</option>
-                            <option value="1">Digital Input</option>
-                            <option value="2">Digital Output</option>
-                            <option value="3">Analog Input</option>
-                            <option value="4">Analog Output</option>
-                        </select>
-                        <input type="submit" value="Save"/>
-                    </form>
-                </body>
-            </html>
-        )
+        content
     );
-};
+
+    free(content);
+}
 
 static void handle_set_config(struct mg_connection *conn, int ev, void *ev_data, void *fn_data) {
     struct mg_http_message *hm = (struct mg_http_message *) ev_data;
     struct mg_str body = hm->body;
     
-    int config[NUM_PINS];
     for (int i=0; i<NUM_PINS; ++i) {
         char key[3];
         snprintf(key, 3, "%d", i);
@@ -103,10 +137,10 @@ static void handle_set_config(struct mg_connection *conn, int ev, void *ev_data,
             mode = strtol(val.ptr, &end, 10);
 
         }
-        config[i] = mode;
+        state.modes[i] = mode;
     }
 
-    save_config(config);
+    save_config(state.modes);
 
     mg_http_reply(
         conn, 
