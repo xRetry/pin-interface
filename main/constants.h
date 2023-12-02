@@ -4,7 +4,7 @@
 #include "esp_err.h"
 #include <stdint.h>
 
-#define NUM_PINS 10
+#define NUM_PINS 21
 
 typedef uint8_t pin_mode_nr_t;
 typedef uint8_t pin_nr_t;
