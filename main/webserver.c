@@ -1,7 +1,8 @@
 #include "mongoose.h"
 #include "webserver.h"
 #include "constants.h"
-#include "board.h"
+//#include "board.h"
+#include "pin_interface.h"
 #include "utils.h"
 
 static void handle_pins_read(struct mg_connection *conn, int ev, void *ev_data, void *fn_data) {
@@ -13,7 +14,7 @@ static void handle_pins_read(struct mg_connection *conn, int ev, void *ev_data, 
     for (int pin_nr=0; pin_nr<NUM_PINS; ++pin_nr) {
         const bool use_pin = (pin_mask >> pin_nr) & 1;
         if (use_pin) {
-            board_pin_operation(pin_nr, &vals[pin_nr], PIN_READ);
+            pi_exec_pin_op(pin_nr, &vals[pin_nr]);
         } else {
             vals[pin_nr] = 0.;
         }
@@ -49,7 +50,7 @@ static void handle_pins_json(struct mg_connection *c, int ev, void *ev_data, voi
             double pin_val = 0;
             if ( ERR(utils_string_to_double(val.ptr, &pin_val)) ) { continue; }
 
-            board_pin_operation(pin_nr, &pin_val, PIN_WRITE);
+            pi_exec_pin_op(pin_nr, &pin_val);
         }
     }
 
@@ -70,7 +71,7 @@ static void handle_pins_json(struct mg_connection *c, int ev, void *ev_data, voi
 
 
             double pin_val = 0;
-            if ( ERR(board_pin_operation(pin_nr, &pin_val, PIN_READ)) ) { continue; }
+            if ( ERR(pi_exec_pin_op(pin_nr, &pin_val)) ) { continue; }
 
             char fmt[] = ",\"%d\":%.10g";
             if (isFirst) {
@@ -164,7 +165,6 @@ static void handle_api_config(struct mg_connection *conn, int ev, void *ev_data,
     if (mg_strcmp(msg->method, mg_str("POST")) == 0) {
         struct mg_str body = msg->body;
         
-        pin_mode_nr_t modes[NUM_PINS];
         for (int i=0; i<NUM_PINS; ++i) {
             char key[3];
             snprintf(key, 3, "%d", i);
@@ -175,10 +175,8 @@ static void handle_api_config(struct mg_connection *conn, int ev, void *ev_data,
                 char* end;
                 mode = strtol(val.ptr, &end, 10);
             }
-            modes[i] = mode;
+            pi_init_pin_mode(i, mode);
         }
-
-        board_init_pin_modes(modes);
 
         mg_http_reply(
             conn, 
