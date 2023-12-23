@@ -1,17 +1,64 @@
 #include "mongoose.h"
 #include "webserver.h"
 #include "constants.h"
-//#include "board.h"
 #include "pin_interface.h"
 #include "utils.h"
+
+#define STRLEN_PIN_NR 3
+#define STRLEN_OP_NR 3
+#define STRLEN_JSON_ALLOWED ((STRLEN_PIN_NR + 1) * PI_NUM_PINS + 3)
+#define STRLEN_JSON_OP (strlen(TEMPLATE_JSON_OP) + STRLEN_JSON_ALLOWED + STRLEN_OP_NR + PI_STRLEN_OP_NAME + 1)
+#define STRLEN_JSON_OPS ((STRLEN_JSON_OP + 1) * PI_NUM_OPS + 3)
+#define STRLEN_JSON_ACTIVE_ENTRY (STRLEN_PIN_NR + STRLEN_OP_NR + 3)
+#define STRLEN_JSON_ACTIVE (PI_NUM_PINS * STRLEN_JSON_ACTIVE_ENTRY + 2)
+
+void ops_as_json(char *json) {
+    json[0] = '\0';
+
+    strcat(json, "[");
+    for (int i=0; i<PI_NUM_OPS; ++i) {
+        char *comma = i == 0 ? "\0" : ",";
+        strcat(json, comma);
+
+        char json_allowed[STRLEN_JSON_ALLOWED] = "[";
+        for (int j=0; j<PI_PIN_OPS[i].pins_allowed_size; ++j) {
+            char *c = j == 0 ? "\0" : ",";
+            strcat(json_allowed, c);
+            char pin_nr[STRLEN_PIN_NR];
+            snprintf(pin_nr, STRLEN_PIN_NR, "%d", PI_PIN_OPS[i].pins_allowed[j]);
+            strcat(json_allowed, pin_nr);
+        }
+        strcat(json_allowed, "]");
+
+        char json_ops[STRLEN_JSON_OPS];
+        snprintf(json_ops, STRLEN_JSON_OPS, TEMPLATE_JSON_OP, i, PI_PIN_OPS[i].name, json_allowed);
+        strcat(json, json_ops);
+    }
+    strcat(json, "]");
+}
+
+void active_as_json(char *json) {
+    json[0] = '\0';
+
+    strcat(json, "{");
+    for (int i=0; i<PI_NUM_PINS; ++i) {
+        char *comma = i == 0 ? "\0" : ",";
+        strcat(json, comma);
+
+        char json_mode[STRLEN_JSON_ACTIVE_ENTRY];
+        snprintf(json_mode, STRLEN_JSON_ACTIVE_ENTRY, "\"%d\":%d", i, pi_state.active_op_nrs[i]);
+        strcat(json, json_mode);
+    }
+    strcat(json, "}");
+}
 
 static void handle_pins_read(struct mg_connection *conn, int ev, void *ev_data, void *fn_data) {
     struct mg_ws_message *ws_msg = (struct mg_ws_message *) ev_data;
 
     // TODO(marco): Allocate memory the correct number pins
-    double vals[NUM_PINS];
+    double vals[PI_NUM_PINS];
     const long pin_mask = conn->data[1];
-    for (int pin_nr=0; pin_nr<NUM_PINS; ++pin_nr) {
+    for (int pin_nr=0; pin_nr<PI_NUM_PINS; ++pin_nr) {
         const bool use_pin = (pin_mask >> pin_nr) & 1;
         if (use_pin) {
             pi_exec_pin_op(pin_nr, &vals[pin_nr]);
@@ -20,7 +67,7 @@ static void handle_pins_read(struct mg_connection *conn, int ev, void *ev_data, 
         }
     }
 
-    for (int i=0; i<NUM_PINS; ++i) {
+    for (int i=0; i<PI_NUM_PINS; ++i) {
         printf("%f,", vals[i]);
     }
     printf("\nread %s\n", ws_msg->data.ptr);
@@ -45,16 +92,16 @@ static void handle_pins_json(struct mg_connection *c, int ev, void *ev_data, voi
 
             long pin_nr = 0;
             // The +1 cuts off the `"`
-            if ( ERR(utils_string_to_long(key.ptr+1, &pin_nr)) ) { continue; }
+            if ( PI_IS_ERR(utils_string_to_long(key.ptr+1, &pin_nr)) ) { continue; }
 
             double pin_val = 0;
-            if ( ERR(utils_string_to_double(val.ptr, &pin_val)) ) { continue; }
+            if ( PI_IS_ERR(utils_string_to_double(val.ptr, &pin_val)) ) { continue; }
 
             pi_exec_pin_op(pin_nr, &pin_val);
         }
     }
 
-    char response[20*NUM_PINS+3] = "{";
+    char response[20*PI_NUM_PINS+3] = "{";
 
     bool isFirst = true;
     offset = mg_json_get(ws_msg->data, "$.read", &length);
@@ -67,11 +114,11 @@ static void handle_pins_json(struct mg_connection *c, int ev, void *ev_data, voi
             if (val.ptr == NULL) { continue; }
 
             long pin_nr = 0;
-            if ( ERR(utils_string_to_long(val.ptr, &pin_nr)) ) { continue; }
+            if ( PI_IS_ERR(utils_string_to_long(val.ptr, &pin_nr)) ) { continue; }
 
 
             double pin_val = 0;
-            if ( ERR(pi_exec_pin_op(pin_nr, &pin_val)) ) { continue; }
+            if ( PI_IS_ERR(pi_exec_pin_op(pin_nr, &pin_val)) ) { continue; }
 
             char fmt[] = ",\"%d\":%.10g";
             if (isFirst) {
@@ -90,20 +137,22 @@ static void handle_pins_json(struct mg_connection *c, int ev, void *ev_data, voi
     mg_ws_send(c, response, strlen(response), WEBSOCKET_OP_TEXT);
 }
 
+
+
 static void handle_config(struct mg_connection *conn, int ev, void *ev_data, void *fn_data) {
-    const int STRLEN_BODY = strlen(TEMPLATE_HTML_CONFIG)+STRLEN_JSON_MODES+STRLEN_JSON_ACTIVE+1;
+    const int STRLEN_BODY = strlen(TEMPLATE_HTML_CONFIG)+STRLEN_JSON_OPS+STRLEN_JSON_ACTIVE+1;
     char *body;
     if ((body = malloc(sizeof(char)*STRLEN_BODY)) == NULL) {
         printf("Error allocating HTML body");
         return;
     }
-    char modes[STRLEN_JSON_MODES];
-    board_modes_as_json(modes);
+    char ops[STRLEN_JSON_OPS];
+    ops_as_json(ops);
 
     char active[STRLEN_JSON_ACTIVE];
-    board_active_as_json(active);
+    active_as_json(active);
 
-    snprintf(body, STRLEN_BODY, TEMPLATE_HTML_CONFIG, modes, active);
+    snprintf(body, STRLEN_BODY, TEMPLATE_HTML_CONFIG, ops, active);
 
     mg_http_reply(
         conn, 
@@ -115,11 +164,11 @@ static void handle_config(struct mg_connection *conn, int ev, void *ev_data, voi
     free(body);
 };
 
-static void handle_api_modes(struct mg_connection *conn, int ev, void *ev_data, void *fn_data) {
+static void handle_api_ops(struct mg_connection *conn, int ev, void *ev_data, void *fn_data) {
     struct mg_http_message *msg = (struct mg_http_message *) ev_data;
     if (mg_strcmp(msg->method, mg_str("GET")) == 0) {
-        char json[STRLEN_JSON_MODES];
-        board_modes_as_json(json);
+        char json[STRLEN_JSON_OPS];
+        ops_as_json(json);
         mg_http_reply(
             conn, 
             200, 
@@ -141,7 +190,7 @@ static void handle_api_active(struct mg_connection *conn, int ev, void *ev_data,
     struct mg_http_message *msg = (struct mg_http_message *) ev_data;
     if (mg_strcmp(msg->method, mg_str("GET")) == 0) {
         char json[STRLEN_JSON_ACTIVE];
-        board_active_as_json(json);
+        active_as_json(json);
 
         mg_http_reply(
             conn, 
@@ -165,7 +214,7 @@ static void handle_api_config(struct mg_connection *conn, int ev, void *ev_data,
     if (mg_strcmp(msg->method, mg_str("POST")) == 0) {
         struct mg_str body = msg->body;
         
-        for (int i=0; i<NUM_PINS; ++i) {
+        for (int i=0; i<PI_NUM_PINS; ++i) {
             char key[3];
             snprintf(key, 3, "%d", i);
 
@@ -175,7 +224,7 @@ static void handle_api_config(struct mg_connection *conn, int ev, void *ev_data,
                 char* end;
                 mode = strtol(val.ptr, &end, 10);
             }
-            pi_init_pin_mode(i, mode);
+            pi_init_pin_op(i, mode);
         }
 
         mg_http_reply(
@@ -216,7 +265,7 @@ static void router(struct mg_connection *c, int ev, void *ev_data, void *fn_data
         } else if (mg_http_match_uri(hm, "/api/config")) {
             handle_api_config(c, ev, ev_data, fn_data);
         } else if (mg_http_match_uri(hm, "/api/modes")) {
-            handle_api_modes(c, ev, ev_data, fn_data);
+            handle_api_ops(c, ev, ev_data, fn_data);
         } else if (mg_http_match_uri(hm, "/api/active")) {
             handle_api_active(c, ev, ev_data, fn_data);
         } else if (mg_match(hm->uri, mg_str("/ws/pins/read/*"), params)) {
@@ -241,6 +290,7 @@ static void router(struct mg_connection *c, int ev, void *ev_data, void *fn_data
 }
 
 void webserver_run(void) {
+    pi_init();
     struct mg_mgr mgr;                                
     mg_mgr_init(&mgr);
     mg_http_listen(&mgr, "http://0.0.0.0:8000", router, NULL);

@@ -4,10 +4,6 @@
 #include "esp_err.h"
 #include <stdint.h>
 
-#define NUM_PINS 21
-
-typedef uint8_t pin_mode_nr_t;
-typedef uint8_t pin_nr_t;
 
 #define TEMPLATE_HTML_CONFIG "\
 <!DOCTYPE html>\
@@ -65,14 +61,6 @@ typedef uint8_t pin_nr_t;
 </html>\
 "
 
-#define TEMPLATE_JSON_MODE "{ \"mode_nr\": %d, \"name\": \"%s\", \"pins\": %s }"
-
-#define OK(x) x == ESP_OK
-#define ERR(x) !(OK(x))
-
-#define OK_OR_RETURN(fn) {\
-    esp_err_t err = fn; \
-    if (err != ESP_OK) { return err; } \
-}
+#define TEMPLATE_JSON_OP "{ \"mode_nr\": %d, \"name\": \"%s\", \"pins\": %s }"
 
 #endif

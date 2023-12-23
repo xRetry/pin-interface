@@ -1,6 +1,7 @@
 #ifndef PIN_INTERFACE_H_
 #define PIN_INTERFACE_H_
 
+#define PI_NUM_PINS 21
 
 #define PI_NUM_ARGS(...) PI_NUM_ARGS_(__VA_ARGS__,PI_PP_RSEQ_N())
 #define PI_NUM_ARGS_(...) PI_PP_128TH_ARG(__VA_ARGS__)
@@ -37,18 +38,22 @@
 #define PI_ALLOWED_PINS(...) {__VA_ARGS__}, .pins_allowed_size=PI_NUM_ARGS(__VA_ARGS__)
 
 // Helper macro to initialize a pin_mod_t struct
-#define PI_REGISTER_MODE(n, d, s, rw, a) { .name=n, .direction=d, .fn_init=s, .fn_rw=rw, .pins_allowed=a }
+#define PI_REGISTER_OP(n, d, s, rw, a) { .name=n, .direction=d, .fn_init=s, .fn_rw=rw, .pins_allowed=a }
+
+#define PI_IS_OK(x) x == 0
+#define PI_IS_ERR(x) !(PI_IS_OK(x))
+
+#define PI_OK_OR_RETURN(fn) {\
+    pi_err_t err = fn; \
+    if (err != 0) { return err; } \
+}
 
 // The allowed length for the name of a mode
-#define STRLEN_MODE_NAME 50
-
-#define NUM_PINS 30
-
-#define pin_dir_t uint8_t
+#define PI_STRLEN_OP_NAME 50
 
 typedef int pi_err_t;
 typedef int pi_pin_nr_t;
-typedef int pi_pin_mode_nr_t;
+typedef int pi_pin_op_nr_t;
 
 enum pi_pin_dir_t {
     PI_DISABLED,
@@ -56,24 +61,31 @@ enum pi_pin_dir_t {
     PI_WRITE
 };
 
-struct pi_pin_mode_t {
-    char name[STRLEN_MODE_NAME];
+struct pi_pin_op_t {
+    char name[PI_STRLEN_OP_NAME];
     enum pi_pin_dir_t direction;
-    pi_err_t (*fn_init)(pi_pin_mode_nr_t);
+    pi_err_t (*fn_init)(pi_pin_op_nr_t);
     pi_err_t (*fn_rw)(pi_pin_nr_t, double*);
-    int pins_allowed[NUM_PINS];
+    int pins_allowed[PI_NUM_PINS];
     int pins_allowed_size;
 };
+
+extern struct pi_state_t {
+    pi_pin_op_nr_t active_op_nrs[PI_NUM_PINS];
+    pi_err_t (*rw_functions[PI_NUM_PINS])(pi_pin_nr_t, double*);
+    enum pi_pin_dir_t directions[PI_NUM_PINS];
+    pi_pin_op_nr_t allowed_op_nrs[PI_NUM_PINS];
+} pi_state;
 
 void pi_init(void);
 
 pi_err_t pi_exec_pin_op(pi_pin_nr_t pin_nr, double *val);
 
-pi_err_t pi_init_pin_mode(pi_pin_nr_t pin_nr, pi_pin_mode_nr_t pin_mode_nr);
+pi_err_t pi_init_pin_op(const pi_pin_nr_t pin_nr, const pi_pin_op_nr_t new_op_nr);
 
-extern const struct pi_pin_mode_t PI_PIN_MODES[];
+extern const struct pi_pin_op_t PI_PIN_OPS[];
 
-extern const int PI_NUM_MODES;
+extern const int PI_NUM_OPS;
 
 #endif
 
