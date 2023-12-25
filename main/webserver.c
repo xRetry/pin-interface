@@ -94,6 +94,8 @@ static void handle_pins_json(struct mg_connection *c, int ev, void *ev_data, voi
             // The +1 cuts off the `"`
             if ( PI_IS_ERR(utils_string_to_long(key.ptr+1, &pin_nr)) ) { continue; }
 
+            if (pi_state.directions[pin_nr] != PI_WRITE) { continue; }
+
             double pin_val = 0;
             if ( PI_IS_ERR(utils_string_to_double(val.ptr, &pin_val)) ) { continue; }
 
@@ -116,6 +118,7 @@ static void handle_pins_json(struct mg_connection *c, int ev, void *ev_data, voi
             long pin_nr = 0;
             if ( PI_IS_ERR(utils_string_to_long(val.ptr, &pin_nr)) ) { continue; }
 
+            if (pi_state.directions[pin_nr] != PI_READ) { continue; }
 
             double pin_val = 0;
             if ( PI_IS_ERR(pi_exec_pin_op(pin_nr, &pin_val)) ) { continue; }
