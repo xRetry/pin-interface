@@ -1,6 +1,17 @@
 #ifndef PIN_INTERFACE_H_
 #define PIN_INTERFACE_H_
 
+#define PI_ARCH_LINUX 0
+#define PI_ARCH_ESP32 1
+
+#if !defined(PI_ARCH)
+    #if defined(__unix__) || defined(__APPLE__)
+        #define PI_ARCH PI_ARCH_LINUX
+    #elif defined(ESP_PLATFORM)
+        #define PI_ARCH PI_ARCH_ESP32
+    #endif
+#endif
+
 #define PI_NUM_PINS 21
 
 #define PI_NUM_ARGS(...) PI_NUM_ARGS_(__VA_ARGS__,PI_PP_RSEQ_N())

@@ -2,10 +2,12 @@
 #include "wifi.h"
 #include <stdio.h>
 #include "pin_interface.h"
-#include "driver/gpio.h"
 #include "pin_modes.c"
-#include "nvs.h"
-#include "nvs_flash.h"
+
+#ifdef PI_ARCH_ESP32
+    #include "nvs.h"
+    #include "nvs_flash.h"
+#endif
 
 void nvs_init() {
     // Initialize NVS
@@ -21,8 +23,12 @@ void nvs_init() {
 
 int app_main() {
 
+#ifdef PI_ARCH_ESP32
     nvs_init();
     wifi_init_sta();
+#endif
+
+    pi_init();
     webserver_run();
     return 0;
 }

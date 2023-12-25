@@ -5,17 +5,6 @@
 #include "utils.h"
 #include "pin_interface.h"
 
-#define PI_ARCH_LINUX 0
-#define PI_ARCH_ESP32 1
-
-#if !defined(PI_ARCH)
-    #if defined(__unix__) || defined(__APPLE__)
-        #define PI_ARCH PI_ARCH_LINUX
-    #elif defined(ESP_PLATFORM)
-        #define PI_ARCH PI_ARCH_ESP32
-    #endif
-#endif
-
 #ifdef PI_ARCH_ESP32
     #include "nvs_flash.h"
     #define STORAGE_NAMESPACE "pi_storage"
