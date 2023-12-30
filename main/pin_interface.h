@@ -51,6 +51,8 @@
 // Helper macro to initialize a pin_mod_t struct
 #define PI_REGISTER_OP(n, d, s, rw, a) { .name=n, .direction=d, .fn_init=s, .fn_rw=rw, .pins_allowed=a }
 
+#define PI_REGISTER_OPS(...) const struct pi_pin_op_t PI_PIN_OPS[] = {__VA_ARGS__}; const int PI_NUM_OPS = sizeof(PI_PIN_OPS)/sizeof(struct pin_op_t)
+
 #define PI_IS_OK(x) x == 0
 #define PI_IS_ERR(x) !(PI_IS_OK(x))
 

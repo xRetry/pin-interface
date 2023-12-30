@@ -2,11 +2,13 @@
 #include "wifi.h"
 #include <stdio.h>
 #include "pin_interface.h"
-#include "pin_modes.c"
 
 #ifdef PI_ARCH_ESP32
     #include "nvs.h"
     #include "nvs_flash.h"
+    #include "pin_operations_esp32c3.c"
+#elif PI_ARCH_LINUX
+    #include "pin_operations_linux.c"
 #endif
 
 void nvs_init() {
