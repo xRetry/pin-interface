@@ -1,9 +1,11 @@
 #ifndef PIN_INTERFACE_H_
 #define PIN_INTERFACE_H_
 
+// All available architectures
 #define PI_ARCH_LINUX 0
 #define PI_ARCH_ESP32 1
 
+// Detect the target architecture
 #if !defined(PI_ARCH)
     #if defined(__unix__) || defined(__APPLE__)
         #define PI_ARCH PI_ARCH_LINUX
@@ -12,9 +14,14 @@
     #endif
 #endif
 
-// TODO(marco): Change number of pins depending on chip
+// TODO(marco): 
+// Change number of pins depending on chip
+// The best solution would be to automatically determine the number of pins
+// from the input of the `PI_ALLOWED_PINS` macro.
+// This is not straight forward, because `PI_NUM_PINS` would not be compile time constant.
 #define PI_NUM_PINS 21
 
+// A series of helper macros to retrieve the number of arguments passed to a macro.
 #define PI_NUM_ARGS(...) PI_NUM_ARGS_(__VA_ARGS__,PI_PP_RSEQ_N())
 #define PI_NUM_ARGS_(...) PI_PP_128TH_ARG(__VA_ARGS__)
 #define PI_PP_128TH_ARG( \
@@ -49,32 +56,43 @@
 // Helper macro to create an array and count its length at compile time
 #define PI_ALLOWED_PINS(...) {__VA_ARGS__}, .pins_allowed_size=PI_NUM_ARGS(__VA_ARGS__)
 
-// Helper macro to initialize a pin_mod_t struct
+/// This macro initializes a `pin_mod_t` struct.
+///
+/// @param n    The name of the pin operation (The maximal length is defined by `PI_STRLEN_OP_NAME`).
+/// @param d    The direction of the operation, as defined by `pi_pin_dir_t`.
+/// @param s    The callback function to initialize the pin operation.
+/// @param rw   The callback function to execute as read/write operation.
+/// @param a    An array pin numbers, defining for which pins the operation is allowed.
 #define PI_ADD_OP(n, d, s, rw, a) { .name=n, .direction=d, .fn_init=s, .fn_rw=rw, .pins_allowed=a }
 
+/// This macro initializes the `PI_PIN_OPS` and `PI_NUM_OPS` from a list of `pin_mod_t` structs.
 #define PI_REGISTER_OPS(...) const struct pi_pin_op_t PI_PIN_OPS[] = {__VA_ARGS__}; const int PI_NUM_OPS = sizeof(PI_PIN_OPS)/sizeof(struct pi_pin_op_t)
 
-#define PI_IS_OK(x) x == 0
+// Helper definitions for error handling
+#define PI_OK 0
+#define PI_IS_OK(x) x == PI_OK
 #define PI_IS_ERR(x) !(PI_IS_OK(x))
-
 #define PI_OK_OR_RETURN(fn) {\
     pi_err_t err = fn; \
     if (err != 0) { return err; } \
 }
 
-// The allowed length for the name of a mode
+/// The allowed length for the name of a pin operation.
 #define PI_STRLEN_OP_NAME 50
 
 typedef int pi_err_t;
 typedef int pi_pin_nr_t;
 typedef int pi_pin_op_nr_t;
 
+/// Defines the possible directions of a pin operation.
 enum pi_pin_dir_t {
-    PI_DISABLED,
-    PI_READ,
-    PI_WRITE
+    PI_DISABLED,    // The pin is disabled
+    PI_READ,        // The operation reads values from a peripheral device
+    PI_WRITE        // The operation writes values to a peripheral device
 };
 
+/// The complete definition of a pin operation.
+/// This struct gets initialized by the `PI_ADD_OP` macro.
 struct pi_pin_op_t {
     char name[PI_STRLEN_OP_NAME];
     enum pi_pin_dir_t direction;
@@ -84,6 +102,8 @@ struct pi_pin_op_t {
     int pins_allowed_size;
 };
 
+/// This struct contains the entire state of the pin interface library.
+/// It gets initialized by the `pi_init` function.
 extern struct pi_state_t {
     pi_pin_op_nr_t active_op_nrs[PI_NUM_PINS];
     pi_err_t (*rw_functions[PI_NUM_PINS])(pi_pin_nr_t, double*);
@@ -91,14 +111,29 @@ extern struct pi_state_t {
     pi_pin_op_nr_t allowed_op_nrs[PI_NUM_PINS];
 } pi_state;
 
+/// This function initializes the pin interface library.
+/// The function needs to be called before any other pin interface function.
 void pi_init(void);
 
+/// Executes the pin operation previously defined by `pi_init_pin_op`.
+///
+/// @param pin_nr   The pin number, for which the operation should be executed
+/// @param val      The value passed to the pin operation, or the storage for the current value. If the currently active operation for this pin is defined as `PI_WRITE`, the value is written as to the pin a output. If it is defined as `PI_READ`, the current value is stored in this parameter, after which it can be used from out the function.
+/// @return         `PI_OK` if the operation was sucessful, the error code otherwise.
 pi_err_t pi_exec_pin_op(pi_pin_nr_t pin_nr, double *val);
 
+/// Initializes a pin operation for the specified pin.
+///
+/// @param pin_nr       The pin number, for which the operation should be enabled.
+/// @param new_op_nr    The pin operation number of the new operation. The number is defined by the index inside the `PI_REGISTER_OPS` macro.
+/// @return             `PI_OK` if the operation was sucessful, the error code otherwise.
 pi_err_t pi_init_pin_op(const pi_pin_nr_t pin_nr, const pi_pin_op_nr_t new_op_nr);
 
+/// This array contains all available pin operations.
+/// The array is initialized by the `PI_REGISTER_OPS` macro.
 extern const struct pi_pin_op_t PI_PIN_OPS[];
 
+/// This constant shows how many pin operations are available.
 extern const int PI_NUM_OPS;
 
 #endif
