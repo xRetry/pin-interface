@@ -1,7 +1,14 @@
-#include "webserver.h"
 #include "wifi.h"
 #include <stdio.h>
 #include "pin_interface.h"
+
+#define MQTT 1
+
+#ifdef WEBSERVER
+#include "webserver.h"
+#elif MQTT
+#include "mqtt.h"
+#endif
 
 #ifdef PI_ARCH_ESP32
     #include "nvs.h"
@@ -31,7 +38,11 @@ int app_main() {
 #endif
 
     pi_init();
+#ifdef WEBSERVER
     webserver_run();
+#elif MQTT
+    mqtt_client_run();
+#endif
     return 0;
 }
 
