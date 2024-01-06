@@ -140,8 +140,6 @@ static void handle_pins_json(struct mg_connection *c, int ev, void *ev_data, voi
     mg_ws_send(c, response, strlen(response), WEBSOCKET_OP_TEXT);
 }
 
-
-
 static void handle_config(struct mg_connection *conn, int ev, void *ev_data, void *fn_data) {
     const int STRLEN_BODY = strlen(TEMPLATE_HTML_CONFIG)+STRLEN_JSON_OPS+STRLEN_JSON_ACTIVE+1;
     char *body;
@@ -149,10 +147,18 @@ static void handle_config(struct mg_connection *conn, int ev, void *ev_data, voi
         printf("Error allocating HTML body");
         return;
     }
-    char ops[STRLEN_JSON_OPS];
+    char *ops;
+    if ((ops = malloc(sizeof(char)*STRLEN_JSON_OPS)) == NULL) {
+        printf("Error allocating json ops");
+        return;
+    }
     ops_as_json(ops);
 
-    char active[STRLEN_JSON_ACTIVE];
+    char *active;
+    if ((active = malloc(sizeof(char)*STRLEN_JSON_OPS)) == NULL) {
+        printf("Error allocating json active");
+        return;
+    }
     active_as_json(active);
 
     snprintf(body, STRLEN_BODY, TEMPLATE_HTML_CONFIG, ops, active);
@@ -164,6 +170,8 @@ static void handle_config(struct mg_connection *conn, int ev, void *ev_data, voi
         body
     );
 
+    free(ops);
+    free(active);
     free(body);
 };
 

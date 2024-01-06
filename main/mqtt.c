@@ -4,7 +4,7 @@
 #define READ_TOPIC "pins/read"
 #define WRITE_TOPIC "pins/write"
 #define QOS 1
-#define URL "mqtt://broker.hivemq.com:1883"
+#define URL "mqtt://3.120.7.115:8884/clientId-hH6nym9YA6"
 
 static struct mg_connection *mqtt_conn;
 

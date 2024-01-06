@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include "pin_interface.h"
 
-#define MQTT 1
+#define MQTT 0
+#define WEBSERVER 1
 
 #ifdef WEBSERVER
 #include "webserver.h"

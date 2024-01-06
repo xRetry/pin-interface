@@ -32,7 +32,7 @@
     function build_selects(modes) {\
         const form = document.querySelector('form');\
 \
-        let pins = Array.from(new Set(modes.flatMap((mode) => mode.pins))).sort();\
+        let pins = Array.from(new Set(modes.flatMap((mode) => mode.pins))).sort((a, b) => a - b);\
         for (const pin of pins.reverse()) {\
             form.insertAdjacentHTML('afterbegin', `<select name=\"${pin}\"><select>`);\
             form.insertAdjacentHTML('afterbegin', `<label>Pin ${pin}</label>`);\
