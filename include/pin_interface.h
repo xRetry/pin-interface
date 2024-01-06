@@ -2,15 +2,15 @@
 #define PIN_INTERFACE_H_
 
 // All available architectures
-#define PI_ARCH_LINUX 0
-#define PI_ARCH_ESP32 1
+
+#define __linux__ 1
 
 // Detect the target architecture
 #if !defined(PI_ARCH)
-    #if defined(__unix__) || defined(__APPLE__)
-        #define PI_ARCH PI_ARCH_LINUX
+    #if defined(__x86_64__) || defined(__M_X64__) || defined(__linux__)
+        #define PI_ARCH_LINUX 1
     #elif defined(ESP_PLATFORM)
-        #define PI_ARCH PI_ARCH_ESP32
+        #define PI_ARCH_ESP32 1
     #endif
 #endif
 

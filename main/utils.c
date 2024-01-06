@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-esp_err_t utils_string_to_long(const char *str, long *num) {
+pi_err_t utils_string_to_long(const char *str, long *num) {
     errno = 0;
     char *endptr = NULL;
     *num = strtol(str, &endptr, 10);
@@ -18,7 +18,7 @@ esp_err_t utils_string_to_long(const char *str, long *num) {
     return 1;
 }
 
-esp_err_t utils_string_to_double(const char *str, double *num) {
+pi_err_t utils_string_to_double(const char *str, double *num) {
     errno = 0;
     char *endptr = NULL;
     *num = strtod(str, &endptr);

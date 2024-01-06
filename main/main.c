@@ -1,4 +1,3 @@
-#include "wifi.h"
 #include <stdio.h>
 #include "pin_interface.h"
 
@@ -10,8 +9,11 @@
 #elif MQTT
 #include "mqtt.h"
 #endif
+//#undef PI_ARCH_ESP32
+//#define PI_ARCH_LINUX 1
 
 #ifdef PI_ARCH_ESP32
+    #include "wifi.h"
     #include "nvs.h"
     #include "nvs_flash.h"
     #include "pin_operations_esp32c3.c"
@@ -19,6 +21,7 @@
     #include "pin_operations_linux.c"
 #endif
 
+#ifdef PI_ARCH_ESP32
 void nvs_init() {
     // Initialize NVS
     esp_err_t err = nvs_flash_init();
@@ -30,12 +33,14 @@ void nvs_init() {
     }
     ESP_ERROR_CHECK( err );
 }
-
-int app_main() {
+#endif
 
 #ifdef PI_ARCH_ESP32
+int app_main() {
     nvs_init();
     wifi_init_sta();
+#elif PI_ARCH_LINUX
+int main() {
 #endif
 
     pi_init();

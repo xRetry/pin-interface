@@ -1,9 +1,7 @@
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
-#include "esp_err.h"
 #include <stdint.h>
-
 
 #define TEMPLATE_HTML_CONFIG "\
 <!DOCTYPE html>\
