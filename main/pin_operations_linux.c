@@ -16,18 +16,18 @@ pi_err_t digital_write(pi_pin_nr_t pin_nr, double *val) {
 }
 
 pi_err_t init_digital_write(pi_pin_nr_t pin_nr) {
-    printf("set digital_write: pin=%d\n", pin_nr);
+    printf("init digital_write: pin=%d\n", pin_nr);
     return 0;
 }
 
 pi_err_t digital_read(pi_pin_nr_t pin_nr, double *val) {
-    printf("set digital_read: pin=%d\n", pin_nr);
+    printf("digital_read: pin=%d\n", pin_nr);
     *val = pin_nr;
     return 0;
 }
 
 pi_err_t init_digital_read(pi_pin_nr_t pin_nr) {
-    printf("set digital_read: pin=%d\n", pin_nr);
+    printf("init digital_read: pin=%d\n", pin_nr);
     return 0;
 }
 

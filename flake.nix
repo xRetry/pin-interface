@@ -75,6 +75,8 @@
             glm
             SDL2
             SDL2_gfx
+
+            mosquitto
           ];
 
           shellHook = ''
