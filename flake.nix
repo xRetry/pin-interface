@@ -14,12 +14,6 @@
         };
         llvm = p.llvmPackages_latest;
 
-        # simple script which replaces the functionality of make
-        # it works with <math.h> and includes debugging symbols by default
-        # it will be updated as per needs
-
-        # arguments: outfile
-        # basic usage example: mk main [flags]
         mymake = p.writeShellScriptBin "mk" ''
           if [ -f "$1.c" ]; then
             i="$1.c"
@@ -33,14 +27,7 @@
           $c -ggdb $i -o $o -lm -Wall $@
         '';
 
-        #webserver-c = p.writeScriptBin "webserver-c" ''
-        #    mkdir -p build && cd build && cmake .. && make && ./webserver-c
-        #'';
-
       in {
-
-        #packages.default = webserver-c;
-
         devShell = p.mkShell.override { stdenv = p.clangStdenv; } rec {
           name = "C";
           packages = with p; [
