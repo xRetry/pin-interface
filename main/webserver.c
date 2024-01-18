@@ -275,7 +275,7 @@ static void router(struct mg_connection *c, int ev, void *ev_data, void *fn_data
             handle_config(c, ev, ev_data, fn_data);
         } else if (mg_http_match_uri(hm, "/api/config")) {
             handle_api_config(c, ev, ev_data, fn_data);
-        } else if (mg_http_match_uri(hm, "/api/modes")) {
+        } else if (mg_http_match_uri(hm, "/api/operations")) {
             handle_api_ops(c, ev, ev_data, fn_data);
         } else if (mg_http_match_uri(hm, "/api/active")) {
             handle_api_active(c, ev, ev_data, fn_data);
