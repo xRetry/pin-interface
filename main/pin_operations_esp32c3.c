@@ -17,7 +17,6 @@ pi_err_t disabled(pi_pin_nr_t pin_nr, double *val) {
 }
 
 pi_err_t digital_write(pi_pin_nr_t pin_nr, double *val) {
-    printf("digital_write: pin=%d, val=%f\n", pin_nr, *val);
     return gpio_set_level(pin_nr, *val);
 }
 
@@ -33,7 +32,6 @@ pi_err_t init_digital_write(pi_pin_nr_t pin_nr) {
 }
 
 pi_err_t digital_read(pi_pin_nr_t pin_nr, double *val) {
-    printf("digital_write: pin=%d, val=%f\n", pin_nr, *val);
     *val = gpio_get_level(pin_nr);
     return ESP_OK;
 }
@@ -81,7 +79,7 @@ pi_err_t init_analog_read(pi_pin_nr_t pin_nr) {
 }
 
 pi_err_t i2c_read(pi_pin_nr_t address, double *val) {
-    printf("analog_read: pin=%d\n", address);
+    printf("i2c read: pin=%d\n", address);
     return i2c_master_read_from_device(0, address, (uint8_t*) val, sizeof(double), 10);
 }
 

@@ -13,12 +13,6 @@
 
 #include "wifi.h"
 
-//#define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
-//#define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
-//#define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY
-#define EXAMPLE_ESP_WIFI_SSID      "A1-C70A32"
-#define EXAMPLE_ESP_WIFI_PASS      "272X5MCV6Y"
-
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 
@@ -41,7 +35,7 @@ static void event_handler(
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        if (s_retry_num < 3) {
+        if (s_retry_num < CONFIG_PI_WIFI_MAXIMUM_RETRY) {
             esp_wifi_connect();
             s_retry_num++;
             ESP_LOGI(TAG, "retry to connect to the AP");
@@ -87,8 +81,8 @@ void wifi_init_sta(void) {
 
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = EXAMPLE_ESP_WIFI_SSID,
-            .password = EXAMPLE_ESP_WIFI_PASS,
+            .ssid = CONFIG_PI_WIFI_SSID,
+            .password = CONFIG_PI_WIFI_PASSWORD,
             .threshold.authmode = WIFI_AUTH_WPA2_PSK,
             //.sae_pwe_h2e = ESP_WIFI_SAE_MODE,
             //.sae_h2e_identifier = EXAMPLE_H2E_IDENTIFIER,
@@ -114,10 +108,10 @@ void wifi_init_sta(void) {
      * happened. */
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
-                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+                 CONFIG_PI_WIFI_SSID, CONFIG_PI_WIFI_PASSWORD);
     } else if (bits & WIFI_FAIL_BIT) {
         ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
-                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+                 CONFIG_PI_WIFI_SSID, CONFIG_PI_WIFI_PASSWORD);
     } else {
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
     }

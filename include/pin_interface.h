@@ -3,7 +3,7 @@
 
 // All available architectures
 
-#define __linux__ 1
+//#define __linux__ 1
 
 // Detect the target architecture
 #if !defined(PI_ARCH)

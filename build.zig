@@ -4,11 +4,11 @@ pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{
         .name = "webinterface",
         .root_source_file = .{ .path = "main/main.c" },
-        //.root_source_file = null,
     });
 
+    exe.defineCMacro("__linux__", "1");
+    exe.defineCMacro("CONFIG_PI_USE_HTTPSERVER", "1");
     exe.addCSourceFiles(&[_][]const u8{
-        //"main/main.c",
         "main/webserver.c",
         "main/mongoose.c",
         "main/mqtt.c",
@@ -20,7 +20,6 @@ pub fn build(b: *std.Build) void {
         "-Werror=return-type",
     });
     exe.linkLibC();
-    exe.defineCMacro("__linux__", "1");
     const p = std.Build.LazyPath.relative("include");
     exe.addIncludePath(p);
 

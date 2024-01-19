@@ -1,0 +1,31 @@
+menu "Pin Interface Config"
+    config PI_WIFI_SSID
+        string "WiFi SSID"
+        default "myssid"
+        help
+            SSID (network name) for the microcontroller to connect to.
+
+    config PI_WIFI_PASSWORD
+        string "WiFi Password"
+        default "mypassword"
+        help
+            WiFi password (WPA or WPA2) for the microcontroller to use.
+
+    config PI_WIFI_MAXIMUM_RETRY
+        int "WiFi retry attempts"
+        default 5
+        help
+            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+    choice
+        prompt "Connection Type"
+        default PI_USE_HTTPSERVER
+        help
+            Choose a connection type for the pin interface
+        config PI_USE_HTTPSERVER
+            bool "HTTP Server"
+        config PI_USE_MQTT
+            bool "MQTT Client"
+    endchoice
+
+endmenu
