@@ -120,7 +120,7 @@ And select the desired configuration using the configuration utility:
 idf.py menuconfig
 ```
 
-All relevant options are under the menu entry `Pin Interface`.
+All relevant options are under the menu entry `Pin Interface Config`.
 
 Finally compile the program and flash it to the microcontroller:
 
