@@ -3,6 +3,8 @@
 At its core, this repository contains a pin interface, which provides a generic wrapper for handling pin/gpio interactions for a microcontroller.
 The library contains a simple and flexible API to manage the state of microcontrollers and dynamically change the active pin configuration at runtime.
 
+TODO(marco): Add image
+
 # Usage
 
 The entire interface is contained in the files `include/pin_interface.h` and `main/pin_interface.c`.
@@ -74,19 +76,104 @@ The pin interface header file exposes additional parameters to the user:
 
 Even though the pin interface is the core part of this this repository, it also showcases implementations for different hardware and communication methods.
 
-## HTTP Server
+## Compilation
 
-TODO(marco): Describe setup steps
+Depending on the compiliation target, choose one of the following comilation methods:
+- Linux: Zig
+- ESP32c3: Espressif IDF
+
+### Zig
+
+Make sure you have zig installed on your system.
+The file `build.zig` in the root of the repository allows choosing between HTTP server and MQTT client.
+To do so, either use
+
+```zig
+exe.defineCMacro("CONFIG_PI_USE_HTTPSERVER", "1");
+```
+**or**
+
+```zig
+exe.defineCMacro("CONFIG_PI_USE_MQTT", "1");
+```
+
+Then, compile and run the program with the following terminal command:
+
+```sh
+zig build run
+```
+
+### Espressif IDF
+
+The build process for the ESP32c3 microcontroller uses the Espressif IDF build tools.
+To set them up correctly, follow the [official documentation](https://docs.espressif.com/projects/esp-idf/en/v5.1.2/esp32/get-started/index.html#installation).
+
+Once installed, set the correct target:
+
+```sh
+idf.py set-target esp32c3
+```
+
+And select the desired configuration using the configuration utility:
+
+```sh
+idf.py menuconfig
+```
+
+All relevant options are under the menu entry `Pin Interface`.
+
+Finally compile the program and flash it to the microcontroller:
+
+```sh
+idf.py build flash
+```
+
+When using the HTTP server, the IP address for connecting to the microcontroller is printed to the serial console.
+To see the outputs, add the `monitor` option to the `idf.py` commmand.
+
+```sh
+idf.py build flash monitor
+```
+
+## HTTP Server
 
 The HTTP server provides the following endpoints:
 - `/config` serves a configuration page, allowing users to change the pin configuration
-- `/api/config` takes a POST request to changes the pin configuration
+- `/api/config` takes a POST request to change the pin configuration
 - `/api/operations` returns all available pin operations as JSON
-- `/api/active` returns the currently activated pin operations
+- `/api/active` returns the currently activated pin operations as JSON
 - `/ws/pins` opens a websocket, which is used to read and write value to specific pins
 
-TODO(marco): Show json formats
+For the websocket use the following message format:
+
+```
+{
+    "write": {"<pin number>": <value>, "<pin number>": <value>, ...},
+    "read": [<pin number>, <pin number>, ...]
+}
+```
+
+Example:
+
+```json
+{
+    "write": {"0": 10.4, "4": 1},
+    "read": [3, 5, 10]
+}
+```
+
+The `read` or `write` key can be omitted if not used.
 
 ## MQTT Client
 
-TODO(marco): Continue
+The MQTT client currently only allows reading and writing values.
+A way of changing the configuration has not been implemented.
+
+The following options can be set for MQTT client:
+-'PI_MQTT_SERVER_URL': The URL of the MQTT server to connect to
+-`PI_MQTT_WRITE_TOPIC`: The MQTT topic for write operations
+-`PI_MQTT_READ_TOPIC`: The MQTT topic for read operations
+
+Both, read and write messages are sent in binary format.
+For sending, the `double pin_values[PI_NUM_PINS]` array is simply cast to a `char *`.
+The program assumes, that incoming messages follow the same method.
