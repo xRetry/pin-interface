@@ -1,16 +1,13 @@
 #include "mongoose.h"
 #include "pin_interface.h"
 
-#define READ_TOPIC "read"
-#define WRITE_TOPIC "write"
 #define QOS 1
-#define URL "mqtt://localhost:1883/"
 
 static struct mg_connection *mqtt_conn;
 
 static void mqtt_handle_write_init(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
-    struct mg_str write_topic = mg_str(WRITE_TOPIC);
-    MG_INFO(("%lu CONNECTED to %s", c->id, URL));
+    struct mg_str write_topic = mg_str(CONFIG_PI_MQTT_WRITE_TOPIC);
+    MG_INFO(("%lu CONNECTED to %s", c->id, CONFIG_PI_MQTT_SERVER_URL));
 
     struct mg_mqtt_opts sub_opts;
     memset(&sub_opts, 0, sizeof(sub_opts));
@@ -45,7 +42,7 @@ static void mqtt_handle_read(void *args) {
         }
     }
 
-    struct mg_str read_topic = mg_str(READ_TOPIC);
+    struct mg_str read_topic = mg_str(COFNIG_PI_MQTT_READ_TOPIC);
     struct mg_mqtt_opts pub_opts;
 
     struct mg_str data = { .ptr = (char *) vals, .len = 4*PI_NUM_PINS };

@@ -8,6 +8,9 @@ pub fn build(b: *std.Build) void {
 
     exe.defineCMacro("__linux__", "1");
     exe.defineCMacro("CONFIG_PI_USE_HTTPSERVER", "1");
+    exe.defineCMacro("CONFIG_PI_MQTT_SERVER_URL", "mqtt://localhost:1883/");
+    exe.defineCMacro("CONFIG_PI_MQTT_WRITE_TOPIC", "write");
+    exe.defineCMacro("CONFIG_PI_MQTT_READ_TOPIC", "read");
     exe.addCSourceFiles(&[_][]const u8{
         "main/webserver.c",
         "main/mongoose.c",

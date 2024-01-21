@@ -1,4 +1,15 @@
 menu "Pin Interface Config"
+    choice
+        prompt "Connection Type"
+        default PI_USE_HTTPSERVER
+        help
+            Choose a connection type for the pin interface
+        config PI_USE_HTTPSERVER
+            bool "HTTP Server"
+        config PI_USE_MQTT
+            bool "MQTT Client"
+    endchoice
+
     config PI_WIFI_SSID
         string "WiFi SSID"
         default "myssid"
@@ -17,15 +28,22 @@ menu "Pin Interface Config"
         help
             Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
 
-    choice
-        prompt "Connection Type"
-        default PI_USE_HTTPSERVER
+    config PI_MQTT_SERVER_URL
+        string "MQTT Server URL"
+        default "mqtt://localhost:1883/"
         help
-            Choose a connection type for the pin interface
-        config PI_USE_HTTPSERVER
-            bool "HTTP Server"
-        config PI_USE_MQTT
-            bool "MQTT Client"
-    endchoice
+            The URL of the MQTT server to connect to.
+
+    config PI_MQTT_WRITE_TOPIC
+        string "MQTT Write Topic"
+        default "write"
+        help
+            The MQTT topic for receiving write values
+
+    config PI_MQTT_READ_TOPIC
+        string "MQTT Read Topic"
+        default "read"
+        help
+            The MQTT topic for sending values read from the pins
 
 endmenu

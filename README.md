@@ -170,9 +170,9 @@ The MQTT client currently only allows reading and writing values.
 A way of changing the configuration has not been implemented.
 
 The following options can be set for MQTT client:
--'PI_MQTT_SERVER_URL': The URL of the MQTT server to connect to
--`PI_MQTT_WRITE_TOPIC`: The MQTT topic for write operations
--`PI_MQTT_READ_TOPIC`: The MQTT topic for read operations
+-'CONFIG_PI_MQTT_SERVER_URL': The URL of the MQTT server to connect to
+-`CONFIG_PI_MQTT_WRITE_TOPIC`: The MQTT topic for write operations
+-`CONFIG_PI_MQTT_READ_TOPIC`: The MQTT topic for read operations
 
 Both, read and write messages are sent in binary format.
 For sending, the `double pin_values[PI_NUM_PINS]` array is simply cast to a `char *`.
