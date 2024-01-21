@@ -3,7 +3,7 @@
 At its core, this repository contains a pin interface, which provides a generic wrapper for handling pin/gpio interactions for a microcontroller.
 The library contains a simple and flexible API to manage the state of microcontrollers and dynamically change the active pin configuration at runtime.
 
-TODO(marco): Add image
+<img src="pi_schema.png" width="700">
 
 # Usage
 
