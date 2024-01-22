@@ -1,22 +1,23 @@
 # Pin Interface
 
-At its core, this repository contains a pin interface, which provides a generic wrapper for handling pin/gpio interactions for a microcontroller.
+At its core, this repository contains a pin interface libray written in C, which provides a generic wrapper for handling pin/gpio interactions on a microcontroller.
 The library contains a simple and flexible API to manage the state of microcontrollers and dynamically change the active pin configuration at runtime.
 
 <img src="pi_schema.png" width="700">
 
 # Usage
 
-The entire interface is contained in the files `include/pin_interface.h` and `main/pin_interface.c`.
-Those two files are standalone and can be freely included in other projects.
+The entire interface is implemented in the files `include/pin_interface.h` and `main/pin_interface.c`.
+Together these two files are standalone and can be freely included in other projects.
 
-The rest of the code serves as an example how the interface can be used in combination with a HTTP-server and a MQTT-client.
+The rest of the code serves as example how the interface can be used in combination with a HTTP server and MQTT client.
 
 ## Hardware Bindings
 
-Each pin operations (e.g. digital read, analog write) need to be defined with two callback functions.
+Pin operations (e.g. digitally reading pins or writing analog values to pins) can be freely defined by the user.
+To do so, two callback functions need to be implemented and registered with the pin interface.
 
-The initalization function is called whenever a the specific pin configuration is requested.
+The initalization function is called whenever a the specific pin configuration is activated.
 It prepares the hardware to be able to read/write values later on.
 
 ```c
@@ -33,9 +34,7 @@ pi_err_t exec_my_read_operation(pi_pin_nr_t pin_nr, double *val) {
 }
 ```
 
-The specific implentation for both functions depends on the target hardware.
-
-Then, the new pin operation can be registered in the interface.
+Then, the new pin operation can be registered with the interface.
 To do so, the macros `PI_REGISTER_OPS` and `PI_ADD_OP` are provided.
 
 ```c
@@ -45,7 +44,7 @@ PI_REGISTER_OPS(
 );
 ```
 
-The `PI_ADD_OP` macro requires an operation name, the direction (read, write or disabled), both callback functions and the GPIO numbers for the new operation.
+The `PI_ADD_OP` macro requires an operation name, the direction (read, write or disabled), both callback functions, and the GPIO numbers for the new operation.
 For examples of hardware bindings, see `main/pin_operations_linux.c` and `main/pin_operations_esp32c3.c`.
 
 **NOTE**: The pin interface needs to be initialized before adding pin operations.
@@ -70,7 +69,7 @@ To make the state persistent after restarts, it is stored in a file after a chan
 The pin interface header file exposes additional parameters to the user:
 - `PI_PIN_OPS` is an array containing all registered pin operations
 - `PI_NUM_OPS` contains the amount of elements in `PI_PIN_OPS`
-- `PI_STRLEN_OP_NAME` defines the maximum amount of characters for a pin operation name, as defined with `PI_ADD_OP`
+- `PI_STRLEN_OP_NAME` defines the maximum amount of characters for a pin operation name, as used in `PI_ADD_OP`
 
 # Examples
 
@@ -80,18 +79,18 @@ Even though the pin interface is the core part of this this repository, it also 
 
 Depending on the compiliation target, choose one of the following comilation methods:
 - Linux: Zig
-- ESP32c3: Espressif IDF
+- ESP32-C3: Espressif IDF
 
 ### Zig
 
-Make sure you have zig installed on your system.
-The file `build.zig` in the root of the repository allows choosing between HTTP server and MQTT client.
+Make sure you have `zig` installed on your system.
+The file `build.zig` in the root of the repository defines all build steps and allows choosing between HTTP server and MQTT client.
 To do so, either use
 
 ```zig
 exe.defineCMacro("CONFIG_PI_USE_HTTPSERVER", "1");
 ```
-**or**
+**OR**
 
 ```zig
 exe.defineCMacro("CONFIG_PI_USE_MQTT", "1");
@@ -105,8 +104,8 @@ zig build run
 
 ### Espressif IDF
 
-The build process for the ESP32c3 microcontroller uses the Espressif IDF build tools.
-To set them up correctly, follow the [official documentation](https://docs.espressif.com/projects/esp-idf/en/v5.1.2/esp32/get-started/index.html#installation).
+The build process for the ESP32-C3 microcontroller uses the Espressif IDF build tools.
+To set them up on your machine, follow the [official documentation](https://docs.espressif.com/projects/esp-idf/en/v5.1.2/esp32/get-started/index.html#installation).
 
 Once installed, set the correct target:
 
@@ -141,7 +140,7 @@ The HTTP server provides the following endpoints:
 - `/config` serves a configuration page, allowing users to change the pin configuration
 - `/api/config` takes a POST request to change the pin configuration
 - `/api/operations` returns all available pin operations as JSON
-- `/api/active` returns the currently activated pin operations as JSON
+- `/api/active` returns the currently activate pin operations as JSON
 - `/ws/pins` opens a websocket, which is used to read and write value to specific pins
 
 For the websocket, use the following message format:
