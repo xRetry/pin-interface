@@ -42,7 +42,7 @@ static void mqtt_handle_read(void *args) {
         }
     }
 
-    struct mg_str read_topic = mg_str(COFNIG_PI_MQTT_READ_TOPIC);
+    struct mg_str read_topic = mg_str(CONFIG_PI_MQTT_READ_TOPIC);
     struct mg_mqtt_opts pub_opts;
 
     struct mg_str data = { .ptr = (char *) vals, .len = 4*PI_NUM_PINS };
@@ -83,14 +83,15 @@ static void mqtt_handle_connect(void *arg) {
         struct mg_mqtt_opts opts = {
             .clean = true,
             .qos = QOS,
-            .topic = mg_str(READ_TOPIC),
+            .topic = mg_str(CONFIG_PI_MQTT_READ_TOPIC),
             .version = 4,
             .message = mg_str("bye")};
-        mqtt_conn = mg_mqtt_connect(mgr, URL, &opts, mqtt_callback, NULL);
+        mqtt_conn = mg_mqtt_connect(mgr, CONFIG_PI_MQTT_SERVER_URL, &opts, mqtt_callback, NULL);
     }
 }
 
 void mqtt_client_run(void) {
+    printf("Starting MQTT client...\n");
     struct mg_mgr mgr;
     mg_mgr_init(&mgr);
     mg_timer_add(&mgr, 2000, MG_TIMER_REPEAT | MG_TIMER_RUN_NOW, mqtt_handle_connect, &mgr);

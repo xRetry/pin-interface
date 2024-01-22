@@ -301,6 +301,7 @@ static void router(struct mg_connection *c, int ev, void *ev_data, void *fn_data
 }
 
 void webserver_run(void) {
+    printf("Starting HTTP server...\n");
     struct mg_mgr mgr;                                
     mg_mgr_init(&mgr);
     mg_http_listen(&mgr, "http://0.0.0.0:8000", router, NULL);
